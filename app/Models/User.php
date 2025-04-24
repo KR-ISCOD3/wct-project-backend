@@ -2,44 +2,36 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory,HasApiTokens;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    // Specify the fillable attributes to allow mass assignment
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role',
+        'gender_id',
+        'image',
+        'work_status',
+        'shift',
+        'position',
+        'create_date',
+        'update_date',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
+    // If you're using timestamps other than 'created_at' and 'updated_at',
+    // you can specify them like this:
+    const CREATED_AT = 'create_date';
+    const UPDATED_AT = 'update_date';
+    // Relationship to Gender model (assuming one-to-many relationship)
+    public function gender()
+    {
+        return $this->belongsTo(Gender::class);
+    }
 }
