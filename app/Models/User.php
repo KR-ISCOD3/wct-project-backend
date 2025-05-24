@@ -21,6 +21,9 @@ class User extends Model
         'work_status',
         'shift',
         'position',
+        'phone_number',
+        'status',
+        'deleted_status',
         'create_date',
         'update_date',
     ];

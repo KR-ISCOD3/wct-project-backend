@@ -17,7 +17,6 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // Validate input fields
         $validator = $this->loginService->validateLogin($request);
 
         if ($validator->fails()) {
@@ -28,9 +27,15 @@ class LoginController extends Controller
             ], 400);
         }
 
-        // Authenticate user and generate token
         $credentials = $validator->validated();
         $authData = $this->loginService->authenticateUser($credentials);
+
+        if ($authData === 'deactivated') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account has been deleted. Please contact the administrator.',
+            ], 403);
+        }
 
         if (!$authData) {
             return response()->json([
@@ -39,8 +44,15 @@ class LoginController extends Controller
             ], 401);
         }
 
-        return $this->respondWithToken($authData['token'], $authData['role']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'token' => $authData['token'],
+            'role' => $authData['role'],
+            'user' => $authData['user']
+        ]);
     }
+
 
     public function logout(Request $request)
     {

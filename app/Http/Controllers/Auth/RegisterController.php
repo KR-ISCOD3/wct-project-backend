@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\NewUserRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\UserRegistrationService;
@@ -40,7 +41,9 @@ class RegisterController extends Controller
 
             // Create the user
             $user = $this->userRegistrationService->createUser($validated);
-
+            // $user = $result['user'];
+            // $result = $user['user'];
+            // event(new NewUserRegistered($result));
             // Return success response
             return response()->json([
                 'success' => true,
@@ -53,6 +56,7 @@ class RegisterController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while registering the user.',
+                // 'details' => $e->getMessage()
             ], 500);
         }
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\NewUserRegistered;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -22,10 +23,11 @@ class UserRegistrationService
             'password' => 'required|string|min:8',
             'role' => 'nullable|string|in:admin,teacher,student,assistant',
             'gender_id' => 'nullable|integer|exists:genders,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|max:2048',
             'work_status' => 'nullable|string|max:255',
             'shift' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:255',
         ]);
 
         // // Check if validation fails
@@ -46,7 +48,7 @@ class UserRegistrationService
     public function storeUser(Request $request)
     {
         // Get the validated data from the request
-        $validated = $request->only(['name', 'email', 'password', 'role', 'gender_id', 'image','work_status','shift','position']);
+        $validated = $request->only(['name', 'email', 'password', 'role', 'gender_id', 'image','work_status','shift','position','phone_number']);
 
         // Default role to 'teacher' if not provided
         $validated['role'] = $validated['role'] ?? 'teacher';
@@ -75,12 +77,13 @@ class UserRegistrationService
           // Create the user
           $user = User::create($validated);
 
+          event(new NewUserRegistered($user));
           // Generate token for the user using Sanctum
           $token = $user->createToken('auth_token')->plainTextToken;
-          
+
           $role = $user->role;
 
-          return ['role' => $role, 'token' => $token];
+          return ['role' => $role, 'token' => $token, 'user' => $user];
     }
 
 

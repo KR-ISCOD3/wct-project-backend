@@ -49,7 +49,7 @@ class RegisterStudentController extends Controller
             'price' => 'required|numeric|min:0',
             'document_fee' => 'nullable|numeric|min:0',
             'payment_method' => 'required|string|max:255',
-            'startdate' => 'required|date|after_or_equal:today',
+            'startdate' => 'required|date',
 
             'status' => 'nullable|in:enabled,disabled', // The status can be 'enabled' or 'disabled'
             'print_status' => 'nullable|in:printed,not printed', // The print status can be 'printed' or 'not printed'
@@ -125,9 +125,71 @@ class RegisterStudentController extends Controller
             return response()->json(['error' => 'Student not found'], 404);
         }
 
-        $student->update($request->all());
-        return response()->json(['message' => 'Student updated successfully', 'data' => $student]);
+        $validator = Validator::make($request->all(), [
+            'student_name' => 'required|string|max:255',
+            'gender_id' => 'required|exists:genders,id',
+            'course_id' => 'nullable|exists:courses,id|required_without:custom_course',
+            'custom_course' => 'nullable|string|max:255|required_without:course_id',
+            'price' => 'required|numeric|min:0',
+            'document_fee' => 'nullable|numeric|min:0',
+            'payment_method' => 'required|string|max:255',
+            'startdate' => 'required|date',
+
+            'status' => 'nullable|in:enabled,disabled',
+            'print_status' => 'nullable|in:printed,not printed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        $validatedData = $validator->validated();
+
+        if (!$validatedData['course_id'] && !$validatedData['custom_course']) {
+            return response()->json(['error' => 'Either course_id or custom_course must be provided'], 400);
+        }
+
+        $courseId = $validatedData['course_id'];
+
+        if (! $courseId && $validatedData['custom_course']) {
+            $newCourse = Course::create([
+                'name' => $validatedData['custom_course'],
+                'category' => ['custom'],
+                'status' => 'enabled',
+                'create_date' => now(),
+            ]);
+            $courseId = $newCourse->id;
+        }
+
+        $exchangeRate = $this->exchangeRateService->getExchangeRate();
+        $coursePrice = $validatedData['price'];
+        $documentFee = $validatedData['document_fee'] ?? 0;
+
+        $totalPrice = $coursePrice + $documentFee;
+        $totalPriceInRiel = ceil($totalPrice * $exchangeRate);
+        $formattedPrice = number_format($totalPrice, 2) . "$ / " . number_format($totalPriceInRiel, 0, '.', '') . "៛";
+
+        $student->update([
+            'student_name' => $validatedData['student_name'],
+            'gender_id' => $validatedData['gender_id'],
+            'course_id' => $courseId,
+            'custom_course' => $validatedData['custom_course'],
+            'price' => $validatedData['price'],
+            'document_fee' => $documentFee,
+            'payment_method' => $validatedData['payment_method'],
+            'total_price' => $formattedPrice,
+            'startdate' => $validatedData['startdate'],
+            'status' => $validatedData['status'] ?? $student->status, // keep old if not sent
+            'print_status' => $validatedData['print_status'] ?? $student->print_status,
+        ]);
+
+        return response()->json([
+            'message' => 'Student updated successfully',
+            'data' => $student
+        ]);
     }
+
+
 
     /**
      * Remove the specified student registration.
@@ -139,7 +201,25 @@ class RegisterStudentController extends Controller
             return response()->json(['error' => 'Student not found'], 404);
         }
 
-        $student->delete();
-        return response()->json(['message' => 'Student deleted successfully']);
+        $student->status = 'disabled'; // <--- update status instead of delete
+        $student->save(); // <--- save the changes
+
+        return response()->json(['message' => 'Student disabled successfully']);
     }
+
+    public function markAsPrinted($id)
+    {
+        $student = RegisterStudent::find($id);
+
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        // Update the print_status to 'printed'
+        $student->print_status = 'printed';
+        $student->save();
+
+        return response()->json(['message' => 'Student print status updated to printed']);
+    }
+
 }

@@ -1,63 +1,89 @@
 <?php
 
-// use Illuminate\Http\Request;
-
+use App\Http\Controllers\Admin\BuildingController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\InstructorController;
 use App\Http\Controllers\Admin\RegisterStudentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Models\RegisterStudent;
+use App\Http\Controllers\Teacher\ClassController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;Route::middleware('auth.api')->get('/user', function (Request $request) {
-    return response()->json($request->user());
-});
-
-// use App\Http\Controllers\CourseController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
-// Route to get user data, protected by Sanctum token
+
+// Public routes
+Route::post('/login', [LoginController::class, 'login'])->name('login');
+Route::post('/register', [RegisterController::class, 'store'])->name('register');
+
+// Authenticated user route
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return response()->json($request->user());
 });
 
-Route::post('/login', [LoginController::class, 'login'])->name('login');
-Route::post('/register', [RegisterController::class, 'store'])->name('register');
+// Authenticated routes
+Route::middleware('auth:sanctum')->group(function () {
 
+    // Logout
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Protected routes (requires Sanctum token)
-    Route::middleware('auth:sanctum')->group(function() {
-        Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    // ✅ Allow all authenticated users to fetch course and building lists
+    Route::get('/courses', [CourseController::class, 'index']);
+    Route::get('/buildings', [BuildingController::class, 'index']);
 
-
-    // Teacher protected route
-    Route::middleware(['role:teacher'])->get('/teacher', function () {
-        return response()->json([
-            'message' => 'Welcome, Teacher!',
-        ]);
-    });
-
-    // Assistant or Admin protected route
+    // 🛡️ Admin & Assistant Only
     Route::middleware(['role:admin,assistant'])->group(function () {
 
+        // Course Management
         Route::prefix('courses')->group(function () {
-            Route::get('/', [CourseController::class, 'index']);
             Route::post('/', [CourseController::class, 'store']);
             Route::put('/{id}', [CourseController::class, 'update']);
             Route::delete('/{id}', [CourseController::class, 'destroy']);
         });
 
-        Route::prefix('registercourse')->group(function(){
-            Route::get('/',[RegisterStudentController::class,'index']);
-            Route::post('/',[RegisterStudentController::class,'store']);
+        // Register Student Management
+        Route::prefix('registercourse')->group(function () {
+            Route::get('/', [RegisterStudentController::class, 'index']);
+            Route::post('/', [RegisterStudentController::class, 'store']);
+            Route::put('/{id}', [RegisterStudentController::class, 'update']);
+            Route::delete('/{id}', [RegisterStudentController::class, 'destroy']);
+            Route::put('/register-student/{id}/mark-printed', [RegisterStudentController::class, 'markAsPrinted']);
+        });
+
+        // Instructor Management
+        Route::prefix('instructors')->group(function () {
+            Route::get('/', [InstructorController::class, 'index']);
+            Route::get('/{id}', [InstructorController::class, 'show']);
+            Route::delete('/{id}', [InstructorController::class, 'destroy']);
+        });
+
+        // Building Management
+        Route::prefix('buildings')->group(function () {
+            Route::post('/', [BuildingController::class, 'store']);
+            Route::put('/{id}', [BuildingController::class, 'update']);
+            Route::delete('/{id}', [BuildingController::class, 'destroy']);
+        });
+
+
+    });
+
+    // Optional: Teacher-only routes can go here
+    Route::middleware(['role:teacher'])->group(function () {
+        // Route::get('/teacher', function () {
+        //     return response()->json(['message' => 'Welcome, Teacher!']);
+        // });
+
+         // Class Management
+         Route::prefix('classes')->group(function () {
+            Route::get('/teacher/{id}', [ClassController::class, 'getByTeacher']);
+            Route::get('/', [ClassController::class, 'index']);
+            Route::post('/', [ClassController::class, 'store']);
+            Route::put('/{id}', [ClassController::class, 'update']);
+            Route::delete('/{id}', [ClassController::class, 'destroy']);
         });
     });
 });

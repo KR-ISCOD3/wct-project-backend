@@ -25,29 +25,40 @@ class LoginService
      * Authenticate the user and return a token.
      */
     public function authenticateUser(array $credentials)
-    {
-        // Find user by email or username
-        $user = User::where('email', $credentials['email_or_username'])
-                    ->orWhere('name', $credentials['email_or_username'])
-                    ->first();
+{
+    // Find user by email or username
+    $user = User::where('email', $credentials['email_or_username'])
+                ->orWhere('name', $credentials['email_or_username'])
+                ->first();
 
-        // Check if user exists and password is correct
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            return null; // Authentication failed
-        }
-
-        // Generate token using Laravel Sanctum
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Get user's role using Enum (default to TEACHER)
-        $role = UserRole::tryFrom($user->role) ?? UserRole::TEACHER;
-
-        return [
-            'token' => $token,
-            'role' => $role->value,
-            'user' => $user
-        ];
+    // ✅ Check if user exists
+    if (!$user) {
+        return null;
     }
+
+    // ✅ Block login if account is deactivated
+    if ($user->deleted_status === 'unactive') {
+        return 'deactivated';
+    }
+
+    // ✅ Check if password is correct
+    if (!Hash::check($credentials['password'], $user->password)) {
+        return null;
+    }
+
+    // ✅ Generate token using Laravel Sanctum
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    // ✅ Get role
+    $role = UserRole::tryFrom($user->role) ?? UserRole::TEACHER;
+
+    return [
+        'token' => $token,
+        'role' => $role->value,
+        'user' => $user
+    ];
+}
+
 
     /**
      * Logout user by revoking all tokens.
