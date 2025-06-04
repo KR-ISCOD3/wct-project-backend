@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\InstructorController;
 use App\Http\Controllers\Admin\RegisterStudentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\StudentController;
 use App\Http\Controllers\Teacher\ClassController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -85,5 +86,19 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/{id}', [ClassController::class, 'update']);
             Route::delete('/{id}', [ClassController::class, 'destroy']);
         });
+
+        // Student Management for Teachers
+        Route::prefix('students')->group(function () {
+            Route::get('/', [StudentController::class, 'index']);          // List all students
+            Route::post('/', [StudentController::class, 'store']);         // Add a student
+            Route::get('/{id}', [StudentController::class, 'show']);       // Get a student by ID
+            Route::put('/{id}', [StudentController::class, 'update']);     // Update a student
+            Route::delete('/{id}', [StudentController::class, 'destroy']); // Delete a student
+
+            Route::get('/class/{classId}', [StudentController::class, 'getByClassId']);
+        });
     });
 });
+
+
+

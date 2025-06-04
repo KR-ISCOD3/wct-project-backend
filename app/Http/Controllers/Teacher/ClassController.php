@@ -23,11 +23,12 @@ class ClassController extends Controller
                 'courses.name as course_name',
                 'buildings.name as building_name'
             )
+            ->orderBy('classes.id')
             ->get();
 
         return response()->json($classes);
     }
-    
+
     public function index()
     {
         $classes = DB::table('classes')
@@ -86,7 +87,7 @@ class ClassController extends Controller
             'course_id' => 'integer',
             'building_id' => 'integer',
             'time' => 'string|max:50',
-            'study_term'=>'string|max:50',
+            'study_term' => 'string|max:50',
             'chapter' => 'string|max:255',
             'status' => 'string|max:50',
             'status_class' => 'string|max:50',
@@ -96,6 +97,7 @@ class ClassController extends Controller
 
         return response()->json($class);
     }
+
 
     // Delete a class by ID
     public function destroy($id)
