@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\RegisterStudentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\StudentController;
+use App\Http\Controllers\Teacher\AttendanceController;
 use App\Http\Controllers\Teacher\ClassController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +86,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [ClassController::class, 'store']);
             Route::put('/{id}', [ClassController::class, 'update']);
             Route::delete('/{id}', [ClassController::class, 'destroy']);
+            Route::get('/teacher/{id}/summary', [ClassController::class, 'classSummary']);
+
+            // 👇 Add this for updating class status
+            Route::put('/{id}/status', [ClassController::class, 'updateStatus']);
         });
 
         // Student Management for Teachers
@@ -96,6 +101,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}', [StudentController::class, 'destroy']); // Delete a student
 
             Route::get('/class/{classId}', [StudentController::class, 'getByClassId']);
+        });
+
+         // Attendance routes
+        Route::prefix('attendance')->group(function () {
+            Route::post('/store', [AttendanceController::class, 'store']);  // Your attendance store method
+            Route::get('/class/{class_id}', [AttendanceController::class, 'getAttendance']);
+            Route::get('/{class_id}/student/{student_id}', [AttendanceController::class, 'getStudentAttendance']);
+
         });
     });
 });
