@@ -110,15 +110,43 @@ class StudentController extends Controller
 
     public function destroy($id)
     {
+        // Find the student first
         $student = DB::table('students')->where('id', $id)->first();
+
         if (!$student) {
             return response()->json(['message' => 'Student not found'], 404);
         }
 
-        DB::table('students')->where('id', $id)->delete();
+        try {
+            DB::beginTransaction();
 
-        return response()->json(['message' => 'Student deleted']);
+            // Delete the student
+            DB::table('students')->where('id', $id)->delete();
+
+            // If the student had a class, update total_students count
+            if (!empty($student->class_id)) {
+                $totalStudents = DB::table('students')
+                    ->where('class_id', $student->class_id)
+                    ->count();
+
+                DB::table('classes')
+                    ->where('id', $student->class_id)
+                    ->update(['total_students' => $totalStudents]);
+            }
+
+            DB::commit();
+
+            return response()->json(['message' => 'Student deleted and class total updated']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Failed to delete student', ['error' => $e->getMessage()]);
+            return response()->json([
+                'error' => true,
+                'message' => 'Failed to delete student',
+            ], 500);
+        }
     }
+
 
     public function getByClassId($classId)
     {
