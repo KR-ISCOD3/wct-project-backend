@@ -56,6 +56,7 @@ class UserRegistrationService
         // Hash the password
         $validated['password'] = Hash::make($validated['password']);
 
+        
         return $validated;
     }
 
