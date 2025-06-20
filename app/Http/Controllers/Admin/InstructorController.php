@@ -53,4 +53,5 @@ class InstructorController extends Controller
         return response()->json(['message' => 'Instructor has been disabled successfully']);
     }
 
+    
 }

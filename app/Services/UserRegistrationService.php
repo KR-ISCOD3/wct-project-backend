@@ -63,7 +63,9 @@ class UserRegistrationService
             $imagePath = $image->storeAs('uploads', $imageName, 'public'); // Save in storage/app/public/uploads
 
             // Generate a public URL
-            $validated['image'] = asset("storage/$imagePath");
+            // $validated['image'] = asset("storage/$imagePath");
+            $validated['image'] = "https://wct-project-backend-master-g8vrdy.laravel.cloud/storage/$imagePath";
+
         }
 
         return $validated;
