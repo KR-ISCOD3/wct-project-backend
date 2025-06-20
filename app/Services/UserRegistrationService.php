@@ -53,10 +53,10 @@ class UserRegistrationService
         // Default role to 'teacher' if not provided
         $validated['role'] = $validated['role'] ?? 'teacher';
 
-        // Hash the password
+        
         $validated['password'] = Hash::make($validated['password']);
 
-        
+
         return $validated;
     }
 
