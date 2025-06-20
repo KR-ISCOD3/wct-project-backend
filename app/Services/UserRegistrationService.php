@@ -56,18 +56,6 @@ class UserRegistrationService
         // Hash the password
         $validated['password'] = Hash::make($validated['password']);
 
-        // // Handle the file upload
-        // if ($request->hasFile('image')) {
-        //     $image = $request->file('image');
-        //     $imageName = time() . '_' . $image->getClientOriginalName(); // Generate a unique name
-        //     $imagePath = $image->storeAs('uploads', $imageName, 'public'); // Save in storage/app/public/uploads
-
-        //     // Generate a public URL
-        //     // $validated['image'] = asset("storage/$imagePath");
-        //     $validated['image'] = "https://wct-project-backend-master-g8vrdy.laravel.cloud/storage/$imagePath";
-
-        // }
-
         return $validated;
     }
 
